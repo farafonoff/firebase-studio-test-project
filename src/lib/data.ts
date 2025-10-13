@@ -1,26 +1,60 @@
 import type { Word } from './types';
 
-// This file simulates fetching data from a Google Docs table.
-// In a real application, you would replace this with a call to the Google Sheets API.
-export const words: Word[] = [
-  { id: 1, turkish: 'merhaba', russian: 'здравствуйте' },
-  { id: 2, turkish: 'teşekkür ederim', russian: 'спасибо' },
-  { id: 3, turkish: 'evet', russian: 'да' },
-  { id: 4, turkish: 'hayır', russian: 'нет' },
-  { id: 5, turkish: 'lütfen', russian: 'пожалуйста' },
-  { id: 6, turkish: 'günaydın', russian: 'доброе утро' },
-  { id: 7, turkish: 'iyi akşamlar', russian: 'добрый вечер' },
-  { id: 8, turkish: 'iyi geceler', russian: 'доброй ночи' },
-  { id: 9, turkish: 'nasılsınız?', russian: 'как дела?' },
-  { id: 10, turkish: 'ben', russian: 'я' },
-  { id: 11, turkish: 'sen', russian: 'ты' },
-  { id: 12, turkish: 'su', russian: 'вода' },
-  { id: 13, turkish: 'ekmek', russian: 'хлеб' },
-  { id: 14, turkish: 'arkadaş', russian: 'друг' },
-  { id: 15, turkish: 'aile', russian: 'семья' },
-  { id: 16, turkish: 'kitap', russian: 'книга' },
-  { id: 17, turkish: 'kedi', russian: 'кошка' },
-  { id: 18, turkish: 'köpek', russian: 'собака' },
-  { id: 19, turkish: 'ev', russian: 'дом' },
-  { id: 20, turkish: 'okul', russian: 'школа' },
-];
+//
+// Instructions:
+// 1. Open your Google Sheet.
+// 2. Make sure you have two columns: the first for Turkish words, the second for their Russian translations.
+// 3. Go to "File" > "Download" > "Comma-separated values (.csv)".
+// 4. Open the downloaded .csv file in a text editor.
+// 5. Copy the entire content of the file.
+// 6. Paste the copied content between the backticks (`) of the `csvData` variable below, replacing the example content.
+//
+const csvData = `
+merhaba,здравствуйте
+teşekkür ederim,спасибо
+evet,да
+hayır,нет
+lütfen,пожалуйста
+günaydın,доброе утро
+iyi akşamlar,добрый вечер
+iyi geceler,доброй ночи
+nasılsınız?,как дела?
+ben,я
+sen,ты
+su,вода
+ekmek,хлеб
+arkadaş,друг
+aile,семья
+kitap,книга
+kedi,кошка
+köpek,собака
+ev,дом
+okul,школа
+`;
+
+/**
+ * Parses the raw CSV data string into an array of Word objects.
+ * @param csv The raw CSV string.
+ * @returns An array of Word objects.
+ */
+function parseCsv(csv: string): Word[] {
+  const lines = csv.trim().split('\n');
+  const words: Word[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line) {
+      const [turkish, russian] = line.split(',');
+      if (turkish && russian) {
+        words.push({
+          id: i + 1,
+          turkish: turkish.trim(),
+          russian: russian.trim(),
+        });
+      }
+    }
+  }
+  return words;
+}
+
+export const words: Word[] = parseCsv(csvData);
