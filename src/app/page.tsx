@@ -1,10 +1,33 @@
 import { shuffle } from 'lodash';
-import { words } from '@/lib/data';
+import { getWordsFromSheet } from '@/lib/data';
 import type { QuizWord } from '@/lib/types';
 import LearningSession from '@/components/learning-session';
 import Logo from '@/components/logo';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function Home() {
+export default async function Home() {
+  const words = await getWordsFromSheet();
+
+  if (!words || words.length === 0) {
+    return (
+       <main className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-8 md:p-12">
+         <Card className="w-full max-w-md text-center">
+            <CardHeader>
+                <CardTitle>Error</CardTitle>
+                <CardDescription>
+                Could not load words from the Google Sheet. Please check the URL and format.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground">
+                    If the problem persists, please check the server logs for more details.
+                </p>
+            </CardContent>
+         </Card>
+       </main>
+    )
+  }
+
   const preparedWords: QuizWord[] = shuffle(words).map((word) => {
     const isTurkishQuestion = Math.random() > 0.5;
     return {
