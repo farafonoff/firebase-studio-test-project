@@ -1,0 +1,105 @@
+'use client';
+
+import { useState, useMemo, useEffect } from 'react';
+import type { QuizWord } from '@/lib/types';
+import Flashcard from '@/components/flashcard';
+import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from './ui/button';
+import { CheckCircle, Award } from 'lucide-react';
+
+type LearningSessionProps = {
+  initialWords: QuizWord[];
+};
+
+export default function LearningSession({ initialWords }: LearningSessionProps) {
+  const [words, setWords] = useState<QuizWord[]>(initialWords);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [correctStreak, setCorrectStreak] = useState(0);
+  const [totalCorrect, setTotalCorrect] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const currentWord = words[currentIndex];
+  const isFinished = currentIndex >= words.length;
+
+  const handleNext = (isCorrect: boolean | null) => {
+    if (isCorrect) {
+      setCorrectStreak((prev) => prev + 1);
+      setTotalCorrect((prev) => prev + 1);
+      // Increase familiarity for correct answers
+      words[currentIndex].familiarity = Math.min(5, words[currentIndex].familiarity + 1);
+    } else {
+      setCorrectStreak(0);
+      // Decrease familiarity for incorrect answers, but not below 0
+      words[currentIndex].familiarity = Math.max(0, words[currentIndex].familiarity - 2);
+    }
+
+    // Sort words to prioritize less familiar ones for the next turn
+    const nextWords = [...words];
+    nextWords.sort((a, b) => a.familiarity - b.familiarity);
+    setWords(nextWords);
+
+    setCurrentIndex((prev) => prev + 1);
+  };
+  
+  const restartSession = () => {
+    const shuffledWords = [...initialWords].sort(() => Math.random() - 0.5);
+    setWords(shuffledWords.map(w => ({ ...w, familiarity: 0 })));
+    setCurrentIndex(0);
+    setCorrectStreak(0);
+    setTotalCorrect(0);
+  }
+
+  const progress = useMemo(() => {
+    if (!words.length) return 0;
+    return (currentIndex / words.length) * 100;
+  }, [currentIndex, words.length]);
+
+  if (!isClient) {
+    return null;
+  }
+
+  if (isFinished) {
+    return (
+      <Card className="w-full max-w-2xl text-center shadow-lg">
+        <CardHeader>
+          <div className="mx-auto bg-primary rounded-full p-4 w-fit mb-4">
+            <Award className="h-12 w-12 text-primary-foreground" />
+          </div>
+          <CardTitle className="text-3xl font-headline">Session Complete!</CardTitle>
+          <CardDescription>Harika iş! (Great job!)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-lg">You correctly answered <span className="font-bold text-green-600">{totalCorrect}</span> out of {words.length} words.</p>
+          <Button onClick={restartSession} className="mt-8">Start a new session</Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="w-full max-w-2xl">
+      <div className="flex items-center gap-4 mb-4">
+        <Progress value={progress} className="h-2" />
+        <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">
+          {currentIndex + 1} / {words.length}
+        </span>
+      </div>
+
+      <div className="relative perspective">
+        <Flashcard key={currentIndex} word={currentWord} onNext={handleNext} />
+      </div>
+
+      {correctStreak > 1 && (
+        <div className="flex items-center justify-center mt-4 gap-2 text-green-600 animate-pulse">
+          <CheckCircle className="h-5 w-5" />
+          <span className="font-bold">{correctStreak} in a row!</span>
+        </div>
+      )}
+    </div>
+  );
+}
