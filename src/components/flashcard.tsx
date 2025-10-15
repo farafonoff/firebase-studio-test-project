@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, FormEvent } from 'react';
-import { validateUserTranslation } from '@/ai/flows/validate-user-translation';
-import type { QuizWord, ValidationResult, QuizLanguage } from '@/lib/types';
+import type { QuizWord, ValidationResult, ValidateUserTranslationOutput } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,13 +57,26 @@ export default function Flashcard({ word, onNext }: FlashcardProps) {
     }
     
     try {
-      const result = await validateUserTranslation({
-        userTranslation,
-        correctTranslation,
-        sourceLanguage,
-        targetLanguage,
+      const response = await fetch('/api/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userTranslation,
+          correctTranslation,
+          sourceLanguage,
+          targetLanguage,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const result: ValidateUserTranslationOutput = await response.json();
       setState({ ...result, isSubmitted: true });
+
     } catch (error) {
       console.error(error);
       setState({

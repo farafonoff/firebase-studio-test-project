@@ -57,7 +57,7 @@ Output a JSON object with "isValid" (boolean) and "feedback" (string) fields.
 `,
 });
 
-const validateUserTranslationFlow = ai.defineFlow(
+export const validateUserTranslationFlow = ai.defineFlow(
   {
     name: 'validateUserTranslationFlow',
     inputSchema: ValidateUserTranslationInputSchema,

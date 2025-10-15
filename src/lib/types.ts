@@ -17,3 +17,15 @@ export type ValidationResult = {
   feedback: string;
   isSubmitted: boolean;
 };
+
+export type ValidateUserTranslationInput = {
+  userTranslation: string;
+  correctTranslation: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+};
+
+export type ValidateUserTranslationOutput = {
+  isValid: boolean;
+  feedback: string;
+};
