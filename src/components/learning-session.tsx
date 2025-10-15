@@ -1,26 +1,53 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { shuffle } from 'lodash';
 import type { QuizWord } from '@/lib/types';
+import { getWordsFromSheet } from '@/lib/data';
 import Flashcard from '@/components/flashcard';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from './ui/button';
-import { CheckCircle, Award } from 'lucide-react';
+import { CheckCircle, Award, Loader } from 'lucide-react';
 
-type LearningSessionProps = {
-  initialWords: QuizWord[];
-};
-
-export default function LearningSession({ initialWords }: LearningSessionProps) {
-  const [words, setWords] = useState<QuizWord[]>(initialWords);
+export default function LearningSession() {
+  const [words, setWords] = useState<QuizWord[]>([]);
+  const [initialWords, setInitialWords] = useState<QuizWord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctStreak, setCorrectStreak] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
-  const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsClient(true);
+    async function loadWords() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const fetchedWords = await getWordsFromSheet();
+        if (fetchedWords.length === 0) {
+          setError("No words found. Check your Google Sheet or the URL in the code.");
+        } else {
+           const preparedWords: QuizWord[] = shuffle(fetchedWords).map((word) => {
+            const isTurkishQuestion = Math.random() > 0.5;
+            return {
+              ...word,
+              quizLanguage: isTurkishQuestion ? 'turkish' : 'russian',
+              answerLanguage: isTurkishQuestion ? 'russian' : 'turkish',
+              familiarity: 0,
+            };
+          });
+          setInitialWords(preparedWords);
+          setWords(preparedWords);
+        }
+      } catch (e) {
+        console.error(e);
+        setError("Failed to load words. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadWords();
   }, []);
 
   const currentWord = words[currentIndex];
@@ -59,8 +86,33 @@ export default function LearningSession({ initialWords }: LearningSessionProps) 
     return (currentIndex / words.length) * 100;
   }, [currentIndex, words.length]);
 
-  if (!isClient) {
-    return null;
+  if (isLoading) {
+    return (
+      <Card className="w-full max-w-md text-center">
+        <CardHeader>
+          <CardTitle>Loading Words...</CardTitle>
+          <CardDescription>
+            Just a moment while we get everything ready.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+     return (
+       <Card className="w-full max-w-md text-center border-destructive">
+          <CardHeader>
+              <CardTitle>Error</CardTitle>
+              <CardDescription className="text-destructive-foreground">
+                {error}
+              </CardDescription>
+          </CardHeader>
+       </Card>
+    )
   }
 
   if (isFinished) {
