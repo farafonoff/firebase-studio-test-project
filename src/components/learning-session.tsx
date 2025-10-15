@@ -64,18 +64,24 @@ export default function LearningSession() {
       // Decrease familiarity for incorrect answers, but not below 0
       words[currentIndex].familiarity = Math.max(0, words[currentIndex].familiarity - 2);
     }
-
-    // Sort words to prioritize less familiar ones for the next turn
-    const nextWords = [...words];
-    nextWords.sort((a, b) => a.familiarity - b.familiarity);
-    setWords(nextWords);
-
+    
+    // We want to show the next word in the list without re-sorting,
+    // so the user sees all words. Sorting will happen on restart.
     setCurrentIndex((prev) => prev + 1);
   };
   
   const restartSession = () => {
-    const shuffledWords = [...initialWords].sort(() => Math.random() - 0.5);
-    setWords(shuffledWords.map(w => ({ ...w, familiarity: 0 })));
+    // Re-shuffle and prepare words from the initial list
+    const preparedWords: QuizWord[] = shuffle(initialWords).map((word) => {
+        const isTurkishQuestion = Math.random() > 0.5;
+        return {
+            ...word,
+            quizLanguage: isTurkishQuestion ? 'turkish' : 'russian',
+            answerLanguage: isTurkishQuestion ? 'russian' : 'turkish',
+            familiarity: 0,
+        };
+    });
+    setWords(preparedWords);
     setCurrentIndex(0);
     setCorrectStreak(0);
     setTotalCorrect(0);
@@ -143,7 +149,7 @@ export default function LearningSession() {
       </div>
 
       <div className="relative perspective">
-        <Flashcard key={currentIndex} word={currentWord} onNext={handleNext} />
+        {currentWord && <Flashcard key={currentWord.id + '-' + currentIndex} word={currentWord} onNext={handleNext} />}
       </div>
 
       {correctStreak > 1 && (
